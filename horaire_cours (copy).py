@@ -287,7 +287,6 @@ class Semaine_std:
 
 
     def cree_semaine(self):
-        maxHoraire = 10
         self.tout_combinaison_pour_la_semaine = []
 
         jour_lundi = Jour(self.data, "lundi")
@@ -348,9 +347,8 @@ class Semaine_std:
                                                 cours_niveau10.extend(cours_niveau9)
 
                                                 count_present_chaque_cours = Counter(cours_niveau10)
-                                                # Verifie que chaque cours est donner le bon nombre de fois
                                                 for un_cour in self.data["cour"]:
-                                                    if count_present_chaque_cours[un_cour["titre"]] != un_cour["nombre_periode_par_cycle"]:
+                                                    if count_present_chaque_cours[un_cour["titre"]] > un_cour["nombre_periode_par_cycle"]:
                                                         break;
                                                 self.tout_combinaison_pour_la_semaine.append([jour1_combinaison,
                                                                  jour2_combinaison,
@@ -362,11 +360,6 @@ class Semaine_std:
                                                                  jour8_combinaison,
                                                                  jour9_combinaison,
                                                                  jour10_combinaison])
-
-                                                # Genere que 10 haraire maximum
-                                                maxHoraire = maxHoraire-1
-                                                if maxHoraire == 0:
-                                                    return
                                                 
         return
 
@@ -377,67 +370,6 @@ class Semaine_std:
                 for cour in periode:
                     print ("{0} | ".format(cour[1],'^20'),end='')
                 print (" ")
-                
-    def htmlPage(self):
-        file1 = open('file1.dummy','w')
-        file2 = open('file2.dummy','w')
-        file3 = open('file3.dummy','w')
-
-        file1.write('''<html>
-<head>
-<link rel="stylesheet" type="text/css" href="tabs_style.css">
-<script>
- function change_tab(id)
- {''')
-
-
-        file2.write(''' }
-</script>
-<style>
-table {
-    font-family: arial, sans-serif;
-    border-collapse: collapse;
-    width: 100%;
-}
-
-td, th {
-    border: 1px solid #dddddd;
-    text-align: left;
-    padding: 8px;
-}
-
-tr:nth-child(even) {
-    background-color: #dddddd;
-}
-</style>
-</head>
-<body>
-
-<div id="main_content">
-
-''')
-
-        for idx, combinaison in enumerate(self.tout_combinaison_pour_la_semaine):
-            file3.write('<div class="hidden_desc" id="page1_desc"> \n<h2>Page {0}</h2>\n<h2>HTML Table</h2> \n<table>\n'.format(idx))
-            file3.write('<tr><th>Periode #</th><th>Lundi</th><th>Mardi</th><th>Mercredi</th><th>Jeudi</th><th>Vendredi</th><th>Lundi</th><th>Mardi</th><th>Mercredi</th><th>Jeudi</th><th>Vendredi</th></tr>\n')
-            for noPeriode in range(0, 5):
-                file3.write("  <tr>\n")
-                for noJour in range(0, 10):
-                    file3.write("    <td>")
-                    for no, cour in enumerate(combinaison[noJour][noPeriode][1]):
-                        if no != 0:
-                            file3.write("<BR>")
-                        file3.write("{0}".format(cour))
-                    file3.write("    </td>\n")
-
-                file3.write("</tr>\n")
-            file3.write('</table></div>\n')
-        file3.write('</div></body></html>\n')
-
-        file1.close()
-        file2.close()
-        file3.close()
-        return
 
 
 class Semaine:
@@ -529,7 +461,7 @@ class Semaine:
 data = lire('donnee _test1.json')
 horaire = Semaine_std(data)
 horaire.cree_semaine()
-horaire.htmlPage()
+horaire.display()
  
 # afficherProf(data)
 # afficherCours(data)

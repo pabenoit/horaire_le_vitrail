@@ -1,0 +1,6 @@
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="tabs_style.css">
+<script>
+ function change_tab(id)
+ {
