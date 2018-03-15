@@ -13,8 +13,8 @@ from copy import deepcopy
 #MAX_PERIODE_PAR_JOUR  =  8
 #MAX_JOURS_SEMAINE     = 10
 MAX_COURS_PAR_PERIODE =  3
-MAX_PERIODE_PAR_JOUR  =  4
-MAX_JOURS_SEMAINE     = 4
+MAX_PERIODE_PAR_JOUR  =  5
+MAX_JOURS_SEMAINE     = 10
 JOUR_DE_LA_SEMAINE = {"lundi","mardi","mercredi","jeudi","vendredi"}
 
 
@@ -229,6 +229,14 @@ class Jour:
     def get_list_de_toute_possible_combinaision_de_cour_de_la_journee(self):
         return self.toute_combinaisons_periode_par_journee
 
+    def display(self):
+        print("Jour {0}".format(self.jour))
+        print("---------------")
+        for combinaison in self.toute_combinaisons_periode_par_journee:
+            print (" ")
+            for periode in combinaison:
+                print ("{0} | ".format(periode[1],'^20'),end='')
+
 
     def recursive_jours_periode(self, no_periode, list_des_cours_jusqua_present_aujourhui,
                       une_combinaison, toute_combinaisons_periode_par_journee):
@@ -277,7 +285,7 @@ class Semaine:
         self.tout_combinaison_pour_la_semaine = []
 
     def cree_semaine(self):
-        for jour_de_semaine in JOUR_DE_LA_SEMAINE:
+        for jour_de_semaine in collections.OrderedDict.fromkeys(JOUR_DE_LA_SEMAINE):
             jour = Jour(self.data, jour_de_semaine)
             jour.cree_list_combinaison_des_periode_pour_la_journee()
             #print(jour.get_list_de_toute_possible_combinaision_de_cour_de_la_journee())
@@ -293,6 +301,14 @@ class Semaine:
     def get_tout_combinaison_pour_la_semaine(self):
         return self.tout_combinaison_pour_la_semaine
 
+    def display(self):
+        for combinaison in self.tout_combinaison_pour_la_semaine:
+            print (" ----------- ")
+            for periode in combinaison:
+                print ("Periode:{}".format(periode))
+                for cour in periode:
+                    print ("{0} | ".format(cour,'^20'),end='')
+
 
     def resursif_horaire_jours_periode(self, no_jour, list_des_cours_jusqua_present, une_combinaison, on_garde ):
         """Cette fonction cree toute les combinaison valide pour l horaire"""
@@ -302,8 +318,9 @@ class Semaine:
             print ("Jour #" +str(no_jour) +jour.jour )
 
             # On regarde chaque periode de la journee
-            for index, jour_combinaison in enumerate(jour.get_list_de_toute_possible_combinaision_de_cour_de_la_journee()):
-
+            tmp = jour.get_list_de_toute_possible_combinaision_de_cour_de_la_journee()
+            for index, jour_combinaison in enumerate(tmp):
+                print ("index {0}".format(index))
                 pprint (jour_combinaison)
                 # Ajoute les nouveaux cours a la list des cours qui sont donnee dans la journee
                 for cours in jour_combinaison:
@@ -316,11 +333,12 @@ class Semaine:
                 # Verifier que aucun cours n est donne trop de fois
                 for un_cour in self.data["cour"]:
                     if count_present_chaque_cours[un_cour["titre"]] > un_cour["nombre_periode_par_cycle"]:
-                        print (un_cour["titre"] + " " +str(count_present_chaque_cours[un_cour["titre"]]) +">" + str(un_cour["nombre_periode_par_cycle"]))
-                        pprint (count_present_chaque_cours)
+#                        print ("-- Cour donne trop souvent dans la journee ")
+#                        print ("  "+un_cour["titre"] + " " +str(count_present_chaque_cours[un_cour["titre"]]) +">" + str(un_cour["nombre_periode_par_cycle"]))
+#                        pprint (count_present_chaque_cours)
+#                        print ("--")
                         # Le cours vas etre donne trop souvent, on arrete l arbre ici
                         return
-
 
                 # Fait une copie
                 nouvelle_combinaison = list(une_combinaison)
@@ -332,11 +350,13 @@ class Semaine:
                 copy_jour += 1
 
 
-                self.resursif_horaire_jours_periode(copy_jour, list_des_cours_jusqua_present, une_combinaison, on_garde)
-
+                self.resursif_horaire_jours_periode(copy_jour, list_des_cours_jusqua_present, nouvelle_combinaison, on_garde)
+#                print ("On est rendu a:")
+#                pprint (une_combinaison)
         # Au dernier niveau et tout les condition respecter alors on garde cette combinason gagnate.
-        print ("On garde !!!")
-        on_garde.append(nouvelle_combinaison)
+#        print ("On garde !!!")
+#        pprint(une_combinaison)
+        on_garde.append(une_combinaison)
 
         return
 
@@ -347,10 +367,20 @@ data = lire('donnee _test1.json')
 horaire = Semaine(data)
 horaire.cree_semaine()
 horaire.cree_list_combinaison_pour_une_semaine()
-pprint (horaire.get_tout_combinaison_pour_la_semaine())
+horaire.display()
  
 # afficherProf(data)
 # afficherCours(data)
 # afficherPOA(data)
+
+# # GENERE UNE JOURNEE
+# data = lire('donnee _test1.json')
+# for jour_de_semaine in JOUR_DE_LA_SEMAINE:
+#     jour = Jour(data, jour_de_semaine)
+#     jour.cree_list_combinaison_des_periode_pour_la_journee()
+#     print (" ")
+#     jour.display()
+
+
 
 print ("FIN")
