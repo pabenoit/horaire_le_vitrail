@@ -15,7 +15,7 @@ from copy import deepcopy
 MAX_COURS_PAR_PERIODE =  3
 MAX_PERIODE_PAR_JOUR  =  5
 MAX_JOURS_SEMAINE     = 10
-JOUR_DE_LA_SEMAINE = {"lundi","mardi","mercredi","jeudi","vendredi"}
+JOUR_DE_LA_SEMAINE = ["lundi","mardi","mercredi","jeudi","vendredi"]
 
 
 def lire(fichier):
@@ -277,6 +277,100 @@ class Jour:
         return
 
 
+class Semaine_std:
+    def __init__(self, data):
+        self.data = data
+        self.tout_combinaison_pour_la_semaine = []
+        
+    def get_tout_combinaison_pour_la_semaine(self):
+        return self.tout_combinaison_pour_la_semaine
+
+
+    def cree_semaine(self):
+        self.tout_combinaison_pour_la_semaine = []
+
+        jour_lundi = Jour(self.data, "lundi")
+        jour_mardi = Jour(self.data, "mardi")
+        jour_mercredi = Jour(self.data, "mercredi")
+        jour_jeudi = Jour(self.data, "jeudi")
+        jour_vendredi = Jour(self.data, "vendredi")
+
+        jour_lundi.cree_list_combinaison_des_periode_pour_la_journee()
+        jour_mardi.cree_list_combinaison_des_periode_pour_la_journee()
+        jour_mercredi.cree_list_combinaison_des_periode_pour_la_journee()
+        jour_jeudi.cree_list_combinaison_des_periode_pour_la_journee()
+        jour_vendredi.cree_list_combinaison_des_periode_pour_la_journee()
+
+        cmb_jour_lundi = jour_lundi.get_list_de_toute_possible_combinaision_de_cour_de_la_journee()
+        cmb_jour_mardi = jour_mardi.get_list_de_toute_possible_combinaision_de_cour_de_la_journee()
+        cmb_jour_mercredi = jour_mercredi.get_list_de_toute_possible_combinaision_de_cour_de_la_journee()
+        cmb_jour_jeudi = jour_jeudi.get_list_de_toute_possible_combinaision_de_cour_de_la_journee()
+        cmb_jour_vendredi = jour_vendredi.get_list_de_toute_possible_combinaision_de_cour_de_la_journee()
+
+        for jour1_combinaison in cmb_jour_lundi:
+            cours_niveau1 = [item for sublist in jour1_combinaison for item in sublist[1]]
+
+            for jour2_combinaison in cmb_jour_mardi:
+                cours_niveau2 = [item for sublist in jour2_combinaison for item in sublist[1]]
+                cours_niveau2.extend(cours_niveau1)
+
+                for jour3_combinaison in cmb_jour_mercredi:
+                    cours_niveau3 = [item for sublist in jour3_combinaison for item in sublist[1]]
+                    cours_niveau3.extend(cours_niveau2)
+
+                    for jour4_combinaison in cmb_jour_jeudi:
+                        cours_niveau4 = [item for sublist in jour4_combinaison for item in sublist[1]]
+                        cours_niveau4.extend(cours_niveau3)
+
+                        for jour5_combinaison in cmb_jour_vendredi:
+                            cours_niveau5 = [item for sublist in jour5_combinaison for item in sublist[1]]
+                            cours_niveau5.extend(cours_niveau4)
+
+                            for jour6_combinaison in cmb_jour_lundi:
+                                cours_niveau6 = [item for sublist in jour6_combinaison for item in sublist[1]]
+                                cours_niveau6.extend(cours_niveau5)
+
+                                for jour7_combinaison in cmb_jour_mardi:
+                                    cours_niveau7 = [item for sublist in jour7_combinaison for item in sublist[1]]
+                                    cours_niveau7.extend(cours_niveau6)
+
+                                    for jour8_combinaison in cmb_jour_mercredi:
+                                        cours_niveau8 = [item for sublist in jour8_combinaison for item in sublist[1]]
+                                        cours_niveau8.extend(cours_niveau7)
+
+                                        for jour9_combinaison in cmb_jour_jeudi:
+                                            cours_niveau9 = [item for sublist in jour9_combinaison for item in sublist[1]]
+                                            cours_niveau9.extend(cours_niveau8)
+
+                                            for jour10_combinaison in cmb_jour_vendredi:
+                                                cours_niveau10 = [item for sublist in jour10_combinaison for item in sublist[1]]
+                                                cours_niveau10.extend(cours_niveau9)
+
+                                                count_present_chaque_cours = Counter(cours_niveau10)
+                                                for un_cour in self.data["cour"]:
+                                                    if count_present_chaque_cours[un_cour["titre"]] > un_cour["nombre_periode_par_cycle"]:
+                                                        break;
+                                                self.tout_combinaison_pour_la_semaine.append([jour1_combinaison,
+                                                                 jour2_combinaison,
+                                                                 jour3_combinaison,
+                                                                 jour4_combinaison,
+                                                                 jour5_combinaison,
+                                                                 jour6_combinaison,
+                                                                 jour7_combinaison,
+                                                                 jour8_combinaison,
+                                                                 jour9_combinaison,
+                                                                 jour10_combinaison])
+                                                
+        return
+
+    def display(self):
+        for combinaison in self.tout_combinaison_pour_la_semaine:
+            print (" ----------- ")
+            for periode in combinaison:
+                for cour in periode:
+                    print ("{0} | ".format(cour[1],'^20'),end='')
+                print (" ")
+
 
 class Semaine:
     def __init__(self, data):
@@ -285,7 +379,7 @@ class Semaine:
         self.tout_combinaison_pour_la_semaine = []
 
     def cree_semaine(self):
-        for jour_de_semaine in collections.OrderedDict.fromkeys(JOUR_DE_LA_SEMAINE):
+        for jour_de_semaine in JOUR_DE_LA_SEMAINE:
             jour = Jour(self.data, jour_de_semaine)
             jour.cree_list_combinaison_des_periode_pour_la_journee()
             #print(jour.get_list_de_toute_possible_combinaision_de_cour_de_la_journee())
@@ -308,6 +402,7 @@ class Semaine:
                 print ("Periode:{}".format(periode))
                 for cour in periode:
                     print ("{0} | ".format(cour,'^20'),end='')
+
 
 
     def resursif_horaire_jours_periode(self, no_jour, list_des_cours_jusqua_present, une_combinaison, on_garde ):
@@ -364,9 +459,8 @@ class Semaine:
 
 # MAIN
 data = lire('donnee _test1.json')
-horaire = Semaine(data)
+horaire = Semaine_std(data)
 horaire.cree_semaine()
-horaire.cree_list_combinaison_pour_une_semaine()
 horaire.display()
  
 # afficherProf(data)

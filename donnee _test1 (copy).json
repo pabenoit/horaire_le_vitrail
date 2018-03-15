@@ -38,6 +38,32 @@
 			},
 		"cour_exclusif": [],
 		"nombre_periode_par_cycle": 2
+		},{
+        "titre": "cour_du_jeudi",
+		"prof": "M_Jeudi",
+        "simultane": 1,
+		"jour_disponible": {
+            "lundi":    [false,false,false,false,false,false,false,false],
+            "mardi":    [false,false,false,false,false,false,false,false],
+            "mercredi": [false,false,false,false,false,false,false,false],
+            "jeudi":    [true,true,true,true,true,true,true,true],
+            "vendredi": [false,false,false,false,false,false,false,false]
+			},
+		"cour_exclusif": [],
+		"nombre_periode_par_cycle": 2
+		},{
+        "titre": "cour_du_vendredi",
+		"prof": "M_Vendredi",
+        "simultane": 1,
+		"jour_disponible": {
+            "lundi":    [false,false,false,false,false,false,false,false],
+            "mardi":    [false,false,false,false,false,false,false,false],
+            "mercredi": [false,false,false,false,false,false,false,false],
+            "jeudi":    [false,false,false,false,false,false,false,false],
+            "vendredi": [true,true,true,true,true,true,true,true]
+			},
+		"cour_exclusif": [],
+		"nombre_periode_par_cycle": 2
 		}],
 		
 
