@@ -1,3 +1,4 @@
+   document.getElementById(id).className="selected";
  }
 </script>
 <style>
@@ -21,4 +22,8 @@ tr:nth-child(even) {
 <body>
 
 <div id="main_content">
+
+ <li class="selected" id="page1" onclick="change_tab(this.id);">Page1</li>
+ <li class="notselected" id="page2" onclick="change_tab(this.id);">Page2</li>
+ <li class="notselected" id="page3" onclick="change_tab(this.id);">Page3</li>
 

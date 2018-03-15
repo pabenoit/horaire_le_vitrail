@@ -287,7 +287,7 @@ class Semaine_std:
 
 
     def cree_semaine(self):
-        maxHoraire = 10
+        maxHoraire = 3
         self.tout_combinaison_pour_la_semaine = []
 
         jour_lundi = Jour(self.data, "lundi")
@@ -382,16 +382,20 @@ class Semaine_std:
         file1 = open('file1.dummy','w')
         file2 = open('file2.dummy','w')
         file3 = open('file3.dummy','w')
+        file4 = open('file4.dummy','w')
 
         file1.write('''<html>
 <head>
-<link rel="stylesheet" type="text/css" href="tabs_style.css">
+<link rel='stylesheet' type="text/css" href="tabs_style.css">
 <script>
  function change_tab(id)
- {''')
+ {
+   document.getElementById("page_content").innerHTML=document.getElementById(id+"_desc").innerHTML;
+''')
 
 
-        file2.write(''' }
+        file2.write('''   document.getElementById(id).className="selected";
+ }
 </script>
 <style>
 table {
@@ -418,25 +422,74 @@ tr:nth-child(even) {
 ''')
 
         for idx, combinaison in enumerate(self.tout_combinaison_pour_la_semaine):
-            file3.write('<div class="hidden_desc" id="page1_desc"> \n<h2>Page {0}</h2>\n<h2>HTML Table</h2> \n<table>\n'.format(idx))
+            file1.write('   document.getElementById("page{}").className="notselected";\n'.format(idx+1))
+            
+            if idx == 0:
+                file2.write(' <li class="selected" id="page1" onclick="change_tab(this.id);">Page1</li>\n')
+            else:
+                file2.write(' <li class="notselected" id="page{0}" onclick="change_tab(this.id);">Page{1}</li>\n'.format(idx+1,idx+1))
+
+            file3.write(" <div class='hidden_desc'")
+            file3.write(' id="page{0}_desc">\n  <h2>Page {0}</h2>\n<h2>HTML Table</h2>\n\n<table>\n'.format(idx+1))
             file3.write('<tr><th>Periode #</th><th>Lundi</th><th>Mardi</th><th>Mercredi</th><th>Jeudi</th><th>Vendredi</th><th>Lundi</th><th>Mardi</th><th>Mercredi</th><th>Jeudi</th><th>Vendredi</th></tr>\n')
+
+            if idx == 0:
+                file4.write(' <div id="page_content">\n')
+                file4.write(' <h2>Page 1</h2>\n <h2>HTML Table</h2>\n\n<table>\n')
+                file4.write('<tr><th>Periode #</th><th>Lundi</th><th>Mardi</th><th>Mercredi</th><th>Jeudi</th><th>Vendredi</th><th>Lundi</th><th>Mardi</th><th>Mercredi</th><th>Jeudi</th><th>Vendredi</th></tr>\n')
+
             for noPeriode in range(0, 5):
-                file3.write("  <tr>\n")
+                file3.write("  <tr>\n    <td>{0}</td>\n".format(noPeriode+1))
+                if idx == 0:
+                    file4.write("  <tr>\n    <td>{0}</td>\n".format(noPeriode+1))
                 for noJour in range(0, 10):
                     file3.write("    <td>")
+                    if idx == 0:
+                        file4.write("    <td>")
                     for no, cour in enumerate(combinaison[noJour][noPeriode][1]):
                         if no != 0:
                             file3.write("<BR>")
+                            if idx == 0:
+                                file4.write("<BR>")
                         file3.write("{0}".format(cour))
-                    file3.write("    </td>\n")
+                        if idx == 0:
+                            file4.write("{0}".format(cour))
+                    file3.write("</td>\n")
+                    if idx == 0:
+                        file4.write("</td>\n")
+                file3.write("  </tr>\n")
+                if idx == 0:
+                    file4.write("  </tr>\n")
+            file3.write('</table>\n </div>\n \n')
+            if idx == 0:
+                file4.write('</table>\n </div>\n \n')
+                
+        file4.write('</div>\n \n</body>\n</html>\n')
 
-                file3.write("</tr>\n")
-            file3.write('</table></div>\n')
-        file3.write('</div></body></html>\n')
+        file2.write('\n')
 
         file1.close()
         file2.close()
         file3.close()
+
+        # Merge the 3 files to make the final html file.
+        file1 = open('file1.dummy')
+        file2 = open('file2.dummy')
+        file3 = open('file3.dummy')
+        file4 = open('file4.dummy')
+        file_html = open('html_test','w')
+        file_html.write(file1.read())
+        file_html.write(file2.read())
+        file_html.write(file3.read())
+        file_html.write(file4.read())
+        file1.close()
+        file2.close()
+        file3.close()
+        file4.close()
+        file_html.close()
+
+
+
         return
 
 
