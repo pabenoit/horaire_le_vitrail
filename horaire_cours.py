@@ -9,13 +9,14 @@ from copy import deepcopy
 # Defenir les constantes utiliser dans le programme
 # NOMBRE_DE_PRERIODE : Indique le nombre de periode dans une journee.
 # NOMBRE_DE_JOURS    : Indique que l horaire est sur combien de jours.
-#MAX_COURS_PAR_PERIODE =  3
-#MAX_PERIODE_PAR_JOUR  =  8
-#MAX_JOURS_SEMAINE     = 10
 MAX_COURS_PAR_PERIODE =  3
 MAX_PERIODE_PAR_JOUR  =  5
 MAX_JOURS_SEMAINE     = 10
 JOUR_DE_LA_SEMAINE = ["lundi","mardi","mercredi","jeudi","vendredi"]
+
+FICHIER_HTML_SORTIER = "horaire.html"
+FICHIER_CSS_SORTIER  = "horaire.css"
+FICHIER_DONNEE_ENTREE  = "donnee_test1.json"
 
 
 def lire(fichier):
@@ -100,15 +101,26 @@ def afficherPOA(donnees):
         print (jour.ljust(15) + ligne)
 
 
-class Cour:
 
+class Cour:
+    """Le but de cette class est de fournir les methodes relative a un cour"""
+    
     def get_titre(self, value):
+        """
+        Retourne le nom du cour
+        """
         return value["titre"]
 
     def is_disponible(self, value, jour, periode):
+        """
+        Retourne True si le cour peux etre donnee pour cette journee et cette periode
+        """
         return value["jour_disponible"][jour][periode]
 
     def is_mutuelle_exclusif(self, value, autre_cour):
+        """
+        Verifie si le cour peut etre donne en meme temps que les autres cours
+        """
         for mutuelle_exclusif in value["cour_exclusif"]:
             if mutuelle_exclusif == autre_cour:
                 return False
@@ -116,6 +128,11 @@ class Cour:
 
 
 class Periode(Cour):
+    """
+    Le but cette class est de generer toute les combinaisons de cours possible
+    pour une periode
+    """
+
     def __init__(self, data, jour, numero_de_la_periode):
         self.toute_combinaisons_cours_par_periode = []
         self.jour = jour
@@ -123,8 +140,8 @@ class Periode(Cour):
         self.data = data
         
     def recursive_cree_cours_periode(self, cour, une_combinaison, toute_combinaisons_cours_par_periode):
-        """Fonction recursive pour cree les combinaisons de 3 cours pour une periode donnee
-    
+        """Function recursive pour cree les combinations de 3 cours pour une periode donnee
+
         La sortie est dans toute_combinaisons_cours_par_periode sous ce format:
     
                                                 <-- Une list de groupe de cours possibles
@@ -135,7 +152,7 @@ class Periode(Cour):
         ]
     
         """
-    
+
         logging.debug("")
         logging.debug("START nombre_de_cour=" + str(len(une_combinaison)))
         # for cour_titre in une_combinaison:
@@ -195,6 +212,10 @@ class Periode(Cour):
 
 
 class Jour:
+    """
+    Le but de cette class, est de generer tout les combinaison de cours pour chaque periodes de la journee
+    """
+
     def __init__(self, data, jour):
         self.list_des_periode = []
         self.jour = jour
@@ -216,8 +237,12 @@ class Jour:
 
 
     def cree_list_combinaison_des_periode_pour_la_journee(self):
+        """
+        Genere gace a la fonction recursive recursive_jours_periode() toutes les combinaisons
+        de cours possible pour cette journee
+        """
 
-            self.cree_chaque_periode_de_la_journee()
+        self.cree_chaque_periode_de_la_journee()
 
             no_periode = 0
             list_des_cours_jusqua_present_aujourhui = []
@@ -227,9 +252,17 @@ class Jour:
                                          une_combinaison, self.toute_combinaisons_periode_par_journee)
 
     def get_list_de_toute_possible_combinaision_de_cour_de_la_journee(self):
+        """
+        Retourne une list de list qui contien toute les combinaison de cours pour chaque poeriodes de la journee
+        Les combinaison doivent etre generer avant en faisant appel a la methode cree_list_combinaison_des_periode_pour_la_journee()
+        """
         return self.toute_combinaisons_periode_par_journee
 
     def display(self):
+        """
+        Permet d afficher toute les combinaison de cours possible pour une journee.
+        Les combinaison doivent etre generer avant en faisant appel a la methode cree_list_combinaison_des_periode_pour_la_journee()
+        """
         print("Jour {0}".format(self.jour))
         print("---------------")
         for combinaison in self.toute_combinaisons_periode_par_journee:
@@ -278,11 +311,16 @@ class Jour:
 
 
 class Semaine_std:
+    """Le but de cette class est de generer toute les combinaison possibles pour une semaine (horaire)
+       le mot semaine fait reference a une semaine d ecole (10 jours dans notre cas et non une semaine
+       du calendrier."""
+
     def __init__(self, data):
         self.data = data
         self.tout_combinaison_pour_la_semaine = []
         
     def get_tout_combinaison_pour_la_semaine(self):
+        """Retourne la list de toutes le combinaisons possible l horaire"""
         return self.tout_combinaison_pour_la_semaine
 
 
@@ -320,6 +358,7 @@ class Semaine_std:
                     cours_niveau3.extend(cours_niveau2)
 
                     for jour4_combinaison in cmb_jour_jeudi:
+                        updateHtmlInProgress(len(cmb_jour_lundi)*len(cmb_jour_mardi)*len(cmb_jour_mercredi))
                         cours_niveau4 = [item for sublist in jour4_combinaison for item in sublist[1]]
                         cours_niveau4.extend(cours_niveau3)
 
@@ -367,7 +406,6 @@ class Semaine_std:
                                                 maxHoraire = maxHoraire-1
                                                 if maxHoraire == 0:
                                                     return
-                                                
         return
 
     def display(self):
@@ -379,21 +417,17 @@ class Semaine_std:
                 print (" ")
                 
     def htmlPage(self):
+        """Genere une page HTML avec des TAB qui contient tout les horaire possible."""
+
+        self.creePageCss()
+        
         file1 = open('file1.dummy','w')
         file2 = open('file2.dummy','w')
         file3 = open('file3.dummy','w')
         file4 = open('file4.dummy','w')
 
-        file1.write('''<html>
-<head>
-<link rel='stylesheet' type="text/css" href="tabs_style.css">
-<script>
- function change_tab(id)
- {
-   document.getElementById("page_content").innerHTML=document.getElementById(id+"_desc").innerHTML;
-''')
-
-
+        file1.write("<html>\n<head>\n<link rel='stylesheet' type='text/css' href={0}>\n".format(FICHIER_CSS_SORTIER))
+        file1.write("<script>\nfunction change_tab(id)\n {\n  document.getElementById('page_content').innerHTML=document.getElementById(id+'_desc').innerHTML;")
         file2.write('''   document.getElementById(id).className="selected";
  }
 </script>
@@ -420,64 +454,59 @@ tr:nth-child(even) {
 <div id="main_content">
 
 ''')
-
+        # Genere la TAB de chaque page web
         for idx, combinaison in enumerate(self.tout_combinaison_pour_la_semaine):
             file1.write('   document.getElementById("page{}").className="notselected";\n'.format(idx+1))
-            
             if idx == 0:
                 file2.write(' <li class="selected" id="page1" onclick="change_tab(this.id);">Page1</li>\n')
             else:
                 file2.write(' <li class="notselected" id="page{0}" onclick="change_tab(this.id);">Page{1}</li>\n'.format(idx+1,idx+1))
-
             file3.write(" <div class='hidden_desc'")
             file3.write(' id="page{0}_desc">\n  <h2>Page {0}</h2>\n<h2>HTML Table</h2>\n\n<table>\n'.format(idx+1))
             file3.write('<tr><th>Periode #</th><th>Lundi</th><th>Mardi</th><th>Mercredi</th><th>Jeudi</th><th>Vendredi</th><th>Lundi</th><th>Mardi</th><th>Mercredi</th><th>Jeudi</th><th>Vendredi</th></tr>\n')
-
-            if idx == 0:
-                file4.write(' <div id="page_content">\n')
-                file4.write(' <h2>Page 1</h2>\n <h2>HTML Table</h2>\n\n<table>\n')
-                file4.write('<tr><th>Periode #</th><th>Lundi</th><th>Mardi</th><th>Mercredi</th><th>Jeudi</th><th>Vendredi</th><th>Lundi</th><th>Mardi</th><th>Mercredi</th><th>Jeudi</th><th>Vendredi</th></tr>\n')
-
             for noPeriode in range(0, 5):
                 file3.write("  <tr>\n    <td>{0}</td>\n".format(noPeriode+1))
-                if idx == 0:
-                    file4.write("  <tr>\n    <td>{0}</td>\n".format(noPeriode+1))
                 for noJour in range(0, 10):
                     file3.write("    <td>")
-                    if idx == 0:
-                        file4.write("    <td>")
                     for no, cour in enumerate(combinaison[noJour][noPeriode][1]):
                         if no != 0:
                             file3.write("<BR>")
-                            if idx == 0:
-                                file4.write("<BR>")
                         file3.write("{0}".format(cour))
-                        if idx == 0:
-                            file4.write("{0}".format(cour))
                     file3.write("</td>\n")
-                    if idx == 0:
-                        file4.write("</td>\n")
                 file3.write("  </tr>\n")
-                if idx == 0:
-                    file4.write("  </tr>\n")
             file3.write('</table>\n </div>\n \n')
-            if idx == 0:
-                file4.write('</table>\n </div>\n \n')
-                
         file4.write('</div>\n \n</body>\n</html>\n')
-
         file2.write('\n')
+
+        # Genere la section TAB default de la page HTML, c est le meme que la page 1 
+        combinaison = self.tout_combinaison_pour_la_semaine[0]
+        file4.write(' <div id="page_content">\n')
+        file4.write(' <h2>Page 1</h2>\n <h2>HTML Table</h2>\n\n<table>\n')
+        file4.write('<tr><th>Periode #</th><th>Lundi</th><th>Mardi</th><th>Mercredi</th><th>Jeudi</th><th>Vendredi</th><th>Lundi</th><th>Mardi</th><th>Mercredi</th><th>Jeudi</th><th>Vendredi</th></tr>\n')
+        for noPeriode in range(0, 5):
+            file4.write("  <tr>\n    <td>{0}</td>\n".format(noPeriode+1))
+            for noJour in range(0, 10):
+                file4.write("    <td>")
+                for no, cour in enumerate(combinaison[noJour][noPeriode][1]):
+                    if no != 0:
+                            file4.write("<BR>")
+                    file4.write("{0}".format(cour))
+                file4.write("</td>\n")
+            file4.write("  </tr>\n")
+        file4.write('</table>\n </div>\n \n')
+        file4.write('</div>\n \n</body>\n</html>\n')
 
         file1.close()
         file2.close()
         file3.close()
+        file4.close()
 
-        # Merge the 3 files to make the final html file.
+        # Merge les 4 fichier temporaire en une seul page WEB.
         file1 = open('file1.dummy')
         file2 = open('file2.dummy')
         file3 = open('file3.dummy')
         file4 = open('file4.dummy')
-        file_html = open('html_test','w')
+        file_html = open(FICHIER_HTML_SORTIER,'w')
         file_html.write(file1.read())
         file_html.write(file2.read())
         file_html.write(file3.read())
@@ -488,98 +517,175 @@ tr:nth-child(even) {
         file4.close()
         file_html.close()
 
+        return
 
+    def creePageCss(self):
+        """Genere la pas CSS requie par la page HTMLe."""
 
+        fichierCss = open(FICHIER_CSS_SORTIER,'w')
+        fichierCss.write('''
+body
+{
+ background-color:#2E3B0B;
+ margin:0px auto;
+ padding:0px;
+ font-family:helvetica;
+ height:2000px;
+}
+h1
+{
+ text-align:center;
+ font-size:35px;
+ margin-top:60px;
+ color:#BEF781;
+}
+h1 p
+{
+ text-align:center;
+ margin:0px;
+ font-size:18px;
+ text-decoration:underline;
+ color:white;
+}
+#main_content
+{
+ margin-top:50px;
+ width:1500px;
+ margin-left:250px;
+}
+#main_content li
+{
+ display:inline;
+ list-style-type:none;
+ background-color:#688A08;
+ padding:10px;
+ border-radius:5px 5px 0px 0px;
+ color:#292A0A;
+ font-weight:bold;
+ cursor:pointer;
+}
+#main_content li.notselected
+{
+ background-color:#688A08;
+ color:#292A0A;	
+}
+#main_content li.selected
+{
+ background-color:#D0F5A9;
+ color:#292A0A;	
+}
+#main_content .hidden_desc
+{
+ display:none;
+ visibility:hidden;
+}
+#main_content #page_content
+{
+ background-color:#D0F5A9;
+ padding:10px;
+ margin-top:9px;
+ border-radius:0px 5px 5px 5px;
+ color:#2E2E2E;
+ line-height: 1.6em;
+ word-spacing:4px;
+}
+''')
+        fichierCss.close()
         return
 
 
-class Semaine:
-    def __init__(self, data):
-        self.data = data
-        self.semaine = []
-        self.tout_combinaison_pour_la_semaine = []
+# --- Obsolite.
+# --- Cette class a ete remplace par la class Semaine_std
+# --- L'idee etais d utilise la recusiviter pour generer l horaire, mais je n ai pas eu le temps de finir.
+# --- donc pour l instant l implementation sequenciel Semaine_std a ete retenue.
+#
+# class Semaine:
+#     def __init__(self, data):
+#         self.data = data
+#         self.semaine = []
+#         self.tout_combinaison_pour_la_semaine = []
+# 
+#     def cree_semaine(self):
+#         for jour_de_semaine in JOUR_DE_LA_SEMAINE:
+#             jour = Jour(self.data, jour_de_semaine)
+#             jour.cree_list_combinaison_des_periode_pour_la_journee()
+#             #print(jour.get_list_de_toute_possible_combinaision_de_cour_de_la_journee())
+#             self.semaine.append(jour)
+# 
+#     def cree_list_combinaison_pour_une_semaine(self):
+#         # Maintenant cree l arbre de tout les combinaisons possibles pour la semaine.
+#         une_combinaison = []
+#         list_des_cours_jusqua_present = []
+#         no_jour = 0
+#         self.resursif_horaire_jours_periode(no_jour, list_des_cours_jusqua_present, une_combinaison, self.tout_combinaison_pour_la_semaine)
+# 
+#     def get_tout_combinaison_pour_la_semaine(self):
+#         return self.tout_combinaison_pour_la_semaine
+# 
+#     def display(self):
+#         for combinaison in self.tout_combinaison_pour_la_semaine:
+#             print (" ----------- ")
+#             for periode in combinaison:
+#                 print ("Periode:{}".format(periode))
+#                 for cour in periode:
+#                     print ("{0} | ".format(cour,'^20'),end='')
+# 
+# 
+#     def resursif_horaire_jours_periode(self, no_jour, list_des_cours_jusqua_present, une_combinaison, on_garde ):
+#         """Cette fonction cree toute les combinaison valide pour l horaire"""
+# 
+#         if no_jour < MAX_JOURS_SEMAINE:
+#             jour = self.semaine[no_jour%5]
+#             print ("Jour #" +str(no_jour) +jour.jour )
+# 
+#             # On regarde chaque periode de la journee
+#             tmp = jour.get_list_de_toute_possible_combinaision_de_cour_de_la_journee()
+#             for index, jour_combinaison in enumerate(tmp):
+#                 print ("index {0}".format(index))
+#                 pprint (jour_combinaison)
+#                 # Ajoute les nouveaux cours a la list des cours qui sont donnee dans la journee
+#                 for cours in jour_combinaison:
+#                     list_des_cours_jusqua_present.extend(cours[1])
+#     
+#                 # Compte combien de fois est present chaque cours
+#                 # Le format de sortie est ({u'math202': 1, u'science': 1, u'francais': 1, u'geo': 1, u'math101': 1}
+#                 count_present_chaque_cours = Counter(list_des_cours_jusqua_present)
+# 
+#                 # Verifier que aucun cours n est donne trop de fois
+#                 for un_cour in self.data["cour"]:
+#                     if count_present_chaque_cours[un_cour["titre"]] > un_cour["nombre_periode_par_cycle"]:
+#                         # Le cours vas etre donne trop souvent, on arrete l arbre ici
+#                         return
+# 
+#                 # Fait une copie
+#                 nouvelle_combinaison = list(une_combinaison)
+#                 
+#                 # Ajoute le nouveau cour a la copie
+#                 nouvelle_combinaison.append((index, jour_combinaison))
+#                 
+#                 copy_jour = deepcopy(no_jour)
+#                 copy_jour += 1
+# 
+# 
+#                 self.resursif_horaire_jours_periode(copy_jour, list_des_cours_jusqua_present, nouvelle_combinaison, on_garde)
+# 
+#         # Au dernier niveau et tout les condition respecter alors on garde cette combinason gagnate.
+#         on_garde.append(une_combinaison)
+# 
+#         return
 
-    def cree_semaine(self):
-        for jour_de_semaine in JOUR_DE_LA_SEMAINE:
-            jour = Jour(self.data, jour_de_semaine)
-            jour.cree_list_combinaison_des_periode_pour_la_journee()
-            #print(jour.get_list_de_toute_possible_combinaision_de_cour_de_la_journee())
-            self.semaine.append(jour)
+def updateHtmlInProgress(progression):
 
-    def cree_list_combinaison_pour_une_semaine(self):
-        # Maintenant cree l arbre de tout les combinaisons possibles pour la semaine.
-        une_combinaison = []
-        list_des_cours_jusqua_present = []
-        no_jour = 0
-        self.resursif_horaire_jours_periode(no_jour, list_des_cours_jusqua_present, une_combinaison, self.tout_combinaison_pour_la_semaine)
+    file_html = open(FICHIER_HTML_SORTIER, 'w')
+    file_html.write("In progress: {0}%".format(progression))
+    file_html.close()
 
-    def get_tout_combinaison_pour_la_semaine(self):
-        return self.tout_combinaison_pour_la_semaine
-
-    def display(self):
-        for combinaison in self.tout_combinaison_pour_la_semaine:
-            print (" ----------- ")
-            for periode in combinaison:
-                print ("Periode:{}".format(periode))
-                for cour in periode:
-                    print ("{0} | ".format(cour,'^20'),end='')
-
-
-
-    def resursif_horaire_jours_periode(self, no_jour, list_des_cours_jusqua_present, une_combinaison, on_garde ):
-        """Cette fonction cree toute les combinaison valide pour l horaire"""
-
-        if no_jour < MAX_JOURS_SEMAINE:
-            jour = self.semaine[no_jour%5]
-            print ("Jour #" +str(no_jour) +jour.jour )
-
-            # On regarde chaque periode de la journee
-            tmp = jour.get_list_de_toute_possible_combinaision_de_cour_de_la_journee()
-            for index, jour_combinaison in enumerate(tmp):
-                print ("index {0}".format(index))
-                pprint (jour_combinaison)
-                # Ajoute les nouveaux cours a la list des cours qui sont donnee dans la journee
-                for cours in jour_combinaison:
-                    list_des_cours_jusqua_present.extend(cours[1])
-    
-                # Compte combien de fois est present chaque cours
-                # Le format de sortie est ({u'math202': 1, u'science': 1, u'francais': 1, u'geo': 1, u'math101': 1}
-                count_present_chaque_cours = Counter(list_des_cours_jusqua_present)
-
-                # Verifier que aucun cours n est donne trop de fois
-                for un_cour in self.data["cour"]:
-                    if count_present_chaque_cours[un_cour["titre"]] > un_cour["nombre_periode_par_cycle"]:
-#                        print ("-- Cour donne trop souvent dans la journee ")
-#                        print ("  "+un_cour["titre"] + " " +str(count_present_chaque_cours[un_cour["titre"]]) +">" + str(un_cour["nombre_periode_par_cycle"]))
-#                        pprint (count_present_chaque_cours)
-#                        print ("--")
-                        # Le cours vas etre donne trop souvent, on arrete l arbre ici
-                        return
-
-                # Fait une copie
-                nouvelle_combinaison = list(une_combinaison)
-                
-                # Ajoute le nouveau cour a la copie
-                nouvelle_combinaison.append((index, jour_combinaison))
-                
-                copy_jour = deepcopy(no_jour)
-                copy_jour += 1
-
-
-                self.resursif_horaire_jours_periode(copy_jour, list_des_cours_jusqua_present, nouvelle_combinaison, on_garde)
-#                print ("On est rendu a:")
-#                pprint (une_combinaison)
-        # Au dernier niveau et tout les condition respecter alors on garde cette combinason gagnate.
-#        print ("On garde !!!")
-#        pprint(une_combinaison)
-        on_garde.append(une_combinaison)
-
-        return
-
-
+    return
 
 # MAIN
-data = lire('donnee _test1.json')
+data = lire(FICHIER_DONNEE_ENTREE)
+
+# # GENERE UNE JOURNEE
 horaire = Semaine_std(data)
 horaire.cree_semaine()
 horaire.htmlPage()
@@ -587,15 +693,5 @@ horaire.htmlPage()
 # afficherProf(data)
 # afficherCours(data)
 # afficherPOA(data)
-
-# # GENERE UNE JOURNEE
-# data = lire('donnee _test1.json')
-# for jour_de_semaine in JOUR_DE_LA_SEMAINE:
-#     jour = Jour(data, jour_de_semaine)
-#     jour.cree_list_combinaison_des_periode_pour_la_journee()
-#     print (" ")
-#     jour.display()
-
-
 
 print ("FIN")
