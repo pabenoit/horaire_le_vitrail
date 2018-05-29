@@ -1,0 +1,7 @@
+json.hpp:1424: error: syntax error
+./horaire.cpp:1: information: Skipping configuration '_MSC_VER' since the value of '_MSC_VER' is unknown. Use -D if you want to check it. You can use -U to skip it explicitly.
+./horaire.cpp:1: information: Skipping configuration '__GNUC__' since the value of '__GNUC__' is unknown. Use -D if you want to check it. You can use -U to skip it explicitly.
+./horaire.cpp:1: information: Skipping configuration '__IBMCPP__' since the value of '__IBMCPP__' is unknown. Use -D if you want to check it. You can use -U to skip it explicitly.
+./horaire.cpp:1: information: Skipping configuration '__PGI' since the value of '__PGI' is unknown. Use -D if you want to check it. You can use -U to skip it explicitly.
+./horaire.cpp:1: information: Skipping configuration '__SUNPRO_CC' since the value of '__SUNPRO_CC' is unknown. Use -D if you want to check it. You can use -U to skip it explicitly.
+:: information: Cppcheck cannot find all the include files (use --check-config for details)

@@ -1,6 +1,7 @@
 #include "horaire.hpp"
 
 #include <stdlib.h>
+
 // https://github.com/nlohmann/json
 
 #define MAXDAY 6
@@ -55,13 +56,13 @@ bool Cour::isAvalable(pair<int, int> jourPeriode)
    return horaire_[jourPeriode];
 }
 
-void Cour::Display()
+void Cour::display()
 {
    cout << "Cour: " << name_ << endl;
 
    cout << "  Nombre: " << nombrePeriodeParCycle_ << endl;
    cout << "  Local: ";
-   if (localPool_)   cout << localPool_->poolName_ << " : ";
+   if (localPool_)   cout << localPool_->getName() << " : ";
    cout << local_ << endl;
    cout << "  Prof: " << prof_->getName() << endl;
 
@@ -76,7 +77,7 @@ void Cour::Display()
    cout << endl;
 }
 
-void CourVide::Display()
+void CourVide::display()
 {
    cout << "Cour: " << name_ << endl;
 }
@@ -87,11 +88,6 @@ Prof::Prof(json jsonProf)
    name_ = jsonProf["nom"];
    nombre_POA_min_ = jsonProf["nombre_POA_min"];
    nombre_POA_max_ = jsonProf["nombre_POA_max"];
-
-// for (auto cour: jsonProf["cour"])
-// {
-//    courName_.push_back(cour);
-// }
 
    for (auto jour = jsonProf["jour_disponible"].begin(); jour != jsonProf["jour_disponible"].end(); jour++)
    {
@@ -115,15 +111,11 @@ bool Prof::isAvalable(pair<int, int> jourPeriode)
    return horaire_[jourPeriode];
 }
 
-void Prof::Display()
+void Prof::display()
 {
    cout << "Prof: " << name_ << endl;
    cout << "  POA: " << nombre_POA_min_ << " - " << nombre_POA_max_ << endl;
    cout << "  Matiere: ";
-
-// for (auto &it:courName_)
-// cout << it << ", ";
-// cout << endl;
 
    for (int day = 1; day <= MAXDAY; day++)
    {
@@ -136,7 +128,7 @@ void Prof::Display()
    cout << endl;
 }
 
-//////////////////////////////////////////////
+
 LocalPool::LocalPool(json jsonLocalPool)
 {
    for (auto localPool = jsonLocalPool.begin(); localPool != jsonLocalPool.end(); localPool++)
@@ -159,14 +151,16 @@ bool LocalPool::isLocalInThisPool(string inLocal)
    return (std::find(locaux_.begin(), locaux_.end(), inLocal) != locaux_.end());
 }
 
-void LocalPool::Display()
+ostream& operator<<(ostream& os, const LocalPool& data)
 {
-   cout << poolName_ << ":  ";
-   for (auto& local: locaux_)
+   os << data.poolName_ << ":  ";
+   for (auto& local: data.locaux_)
    {
-      cout << local << ", ";
+      os << local << ", ";
    }
-   cout << endl;
+   os << endl;
+
+   return os;
 }
 
 Configuration::Configuration(const char fileName[])
@@ -189,32 +183,26 @@ void Configuration::initialize()
 {
 
    for (auto &unProf:myConfig_["professeur"])
-   {
       prof_.push_back(Prof(unProf));
-   }
 
    for (auto &unlocal:myConfig_["local"])
-   {
       localPool_.push_back(LocalPool(unlocal));
-   }
 
    for (auto &unCour:myConfig_["cour"])
-   {
       cours_.push_back(Cour(unCour, prof_, localPool_));
-   }
 }
 
 
-void Configuration::Display()
+void Configuration::display()
 {
    for (auto& it:prof_)
-   it.Display();
+      it.display();
 
    for (auto& it:localPool_)
-   it.Display();
+      cout << it;
 
    for (auto& it:cours_)
-   it.Display();
+      it.display();
 
 }
 
@@ -234,21 +222,21 @@ void Periode::CreeCours(Configuration * config, int jour, int periode)
    config_  = config;
 
    std::vector<Cour *> combinaisonCours;
-   for (auto cour = config_->cours_.begin(); cour != config_->cours_.end(); cour++)
+   for (auto cour = config_->getCours().begin(); cour != config_->getCours().end(); cour++)
    {
       recursiveCreeCoursPourUnePeriode(cour, combinaisonCours);
    }
 
    // Ajoute le case ou aucun cour n est donne pour cette periode
    std::vector<Cour *> combinaisonPasDeCour;
-   combinaisonPasDeCour.push_back(config_->coursVide_.getReference());
+   combinaisonPasDeCour.push_back(config_->getCourVide().getReference());
    allCombinaison_.push_back(combinaisonPasDeCour);
 }
 
 // Function recursive pour cree les combinations de 3 cours pour une periode donnee
 void Periode::recursiveCreeCoursPourUnePeriode(std::vector<Cour>::iterator cour, std::vector<Cour *> combinaisonCours)
 {
-   while (cour != config_->cours_.end())
+   while (cour != config_->getCours().end())
    {
       bool recursif = false;
 
@@ -292,20 +280,25 @@ void Periode::recursiveCreeCoursPourUnePeriode(std::vector<Cour>::iterator cour,
    return;
 }
 
-void Periode::Display()
-{
-   cout << "(" << jour_ << "," << periode_ << ") :" << endl;
 
-   for(auto it:allCombinaison_)
+ostream& operator<<(ostream& os, const Periode& data)
+{
+   os << "(" << data.jour_ << "," << data.periode_ << ") :" << endl;
+
+   for(auto it:data.allCombinaison_)
    {
       for (auto it2:it)
       {
-         cout << it2->getName() << ", ";
+         os  << it2->getName() << ", ";
       }
-      cout << endl;
+      os  << endl;
    }
-   cout << endl;
+   os << endl;
+
+   return os;
 }
+
+
 
 Jour::Jour()
 {
@@ -318,25 +311,23 @@ void Jour::Cree(Configuration *config, int jour)
    jour_   = jour;
    config_ = config;
 
+   // Cree toute les periode et tout les combinaisons de chaque periode.
    for (int periodeIdx = 0; periodeIdx < MAXPERIOD; periodeIdx++)
    {
-      Periode periode;
-      periode.CreeCours(config, jour, periodeIdx);
-      periode_[periodeIdx] = periode;
+      periode_[periodeIdx].CreeCours(config, jour, periodeIdx);
    }
 
    std::unordered_map<Cour *, int> frequenceDuCour;
    std::unordered_map < int, std::vector<Cour* >> uneCombinaison;
-   int periodeNumber = 0;
 
-   recursiveCree(periodeNumber, frequenceDuCour, uneCombinaison);
+   recursiveCree(0, frequenceDuCour, uneCombinaison);
 }
 
 
-void Jour::go1levelDeep(int periodeNumber,
+void Jour::go1levelDeep(int periodeIndex,
                         std::vector<Cour *> chaqueCombinaison,
                         std::unordered_map<Cour *, int> frequenceDuCour,
-                        std::unordered_map<int, std::vector<Cour*>> uneCombinaison)
+                        std::unordered_map<int, CourList> uneCombinaison)
 {
    // Compte la frequence des cour presents
    for (auto cour:chaqueCombinaison)
@@ -350,21 +341,21 @@ void Jour::go1levelDeep(int periodeNumber,
       }
    }
 
-   uneCombinaison[periodeNumber] = chaqueCombinaison;
+   uneCombinaison[periodeIndex] = chaqueCombinaison;
 
-   recursiveCree(periodeNumber+1, frequenceDuCour, uneCombinaison);
+   recursiveCree(periodeIndex + 1, frequenceDuCour, uneCombinaison);
 
 }
 
-void Jour::recursiveCree(int periodeNumber,
+void Jour::recursiveCree(int periodeIndex,
                          std::unordered_map<Cour *, int> frequenceDuCour,
-                         std::unordered_map<int, std::vector<Cour*>> uneCombinaison)
+                         std::unordered_map<int, CourList> uneCombinaison)
 {
-   if (periodeNumber < MAXPERIOD)
+   if (periodeIndex < MAXPERIOD)
    {
-      for (auto chaqueCombinaison:periode_[periodeNumber].allCombinaison_)
+      for (auto chaqueCombinaison:periode_[periodeIndex].getAllCombinaison())
       {
-         go1levelDeep(periodeNumber,
+         go1levelDeep(periodeIndex,
                       chaqueCombinaison,
                       frequenceDuCour,
                       uneCombinaison);
@@ -372,27 +363,27 @@ void Jour::recursiveCree(int periodeNumber,
    } else
    {
       // On est au dernier niveau, il est temps de verifier si on garde ou non les combinaisons
-      bool courTropSouvent = false;
+      bool isCourTropSouvent = false;
       for (auto& cour: frequenceDuCour)
       {
          if (cour.second > cour.first->nombrePeriodeParCycle_)
          {
             // Failed le cour est donne trop souvent.
-            courTropSouvent = true;
+            isCourTropSouvent = true;
             break;
          }
       }
 
-      if (courTropSouvent == false)
+      if (isCourTropSouvent == false)
       {
-         //std::pair < std::unordered_map<Cour *, int> , std::unordered_map<int, std::vector<Cour*>> > toKeep(frequenceDuCour, uneCombinaison);
          // On garde
-         combinaison_.push_back(uneCombinaison);
+         JourCombinaison onGarde = { frequenceDuCour, uneCombinaison };
+         combinaison_.push_back(onGarde);
       }
    }
 }
 
-void Jour::DisplayCombinaison()
+void Jour::displayCombinaison()
 {
    for (auto uneComb:combinaison_)
    {
@@ -401,7 +392,7 @@ void Jour::DisplayCombinaison()
       for (int periodeNb = 0; periodeNb < MAXPERIOD; periodeNb++)
       {
          cout << "    " << periodeNb << "- ";
-         for (auto cour:uneComb[periodeNb])
+         for (auto cour:uneComb.combinaison[periodeNb])
          {
             cout << std::left << std::setw(10) << cour->getName();
          }
@@ -423,53 +414,42 @@ void Semaine::Cree(Configuration *config)
 
    for (int jourIdx = 0; jourIdx < MAXDAY; jourIdx++)
    {
-      Jour jour;
-      jour.Cree(config, jourIdx);
-      jour_[jourIdx] = jour;
+      jour_[jourIdx].Cree(config, jourIdx);
    }
-#if 0
+
    std::unordered_map<Cour *, int> frequenceDuCour;
-   std::unordered_map <std::unordered_map < int, std::vector<Cour* >>> uneCombinaison;
-   int jourIdx = 0;
+   std::unordered_map<int, JourCombinaison *> uneCombinaison;
 
-   recursiveCree(jourIdx, frequenceDuCour, uneCombinaison);
-#endif
+   recursiveCree(0, frequenceDuCour, uneCombinaison);
 }
-#if 0
 
-void Jour::go1levelDeep(int periodeNumber,
-                        std::vector<Cour *> chaqueCombinaison,
-                        std::unordered_map<Cour *, int> frequenceDuCour,
-                        std::unordered_map<int, std::vector<Cour*>> uneCombinaison)
+void Semaine::go1levelDeep(int jourIdx,
+                           JourCombinaison jourCombinaison,
+                           std::unordered_map<Cour *, int> frequenceDuCour,
+                           std::unordered_map<int, JourCombinaison *> uneCombinaison)
 {
    // Compte la frequence des cour presents
-   for (auto cour:chaqueCombinaison)
+   for (auto courFrequence:jourCombinaison.frequenceDesCours)
    {
-      frequenceDuCour[cour]++;
-      if (frequenceDuCour[cour] > cour->nombrePeriodeParCycle_)
-      {
-         // Cour donne trop souvent. donc on arrete ici
-         // on ne vas pas un viveau plus bas car inutile.
-         return;
-      }
+      frequenceDuCour[courFrequence.first] += courFrequence.second;
    }
 
-   uneCombinaison[periodeNumber] = chaqueCombinaison;
+   uneCombinaison[jourIdx] = &jourCombinaison;
 
-   recursiveCree(periodeNumber+1, frequenceDuCour, uneCombinaison);
+   recursiveCree(jourIdx + 1, frequenceDuCour, uneCombinaison);
 
 }
 
-void Jour::recursiveCree(int jourIdx,
-                         std::unordered_map<Cour *, int> frequenceDuCour,
-                         std::unordered_map<std::unordered_map<int, std::vector<Cour*>>> uneCombinaison)
+void Semaine::recursiveCree(int jourIdx,
+                            std::unordered_map<Cour *, int> frequenceDuCour,
+                            std::unordered_map<int, JourCombinaison *> uneCombinaison)
 {
    if (jourIdx < MAXDAY)
    {
-      for (auto chaqueCombinaison:periode_[jourIdx].allCombinaison_)
+      for (auto jourCombinaison:jour_[jourIdx].getAllCombinaison())
       {
          go1levelDeep(jourIdx,
-                      chaqueCombinaison,
+                      jourCombinaison,
                       frequenceDuCour,
                       uneCombinaison);
       }
@@ -477,7 +457,7 @@ void Jour::recursiveCree(int jourIdx,
    {
       // Verifier tout les cours
       bool isFrequenceCourOk = true;
-      for (auto cour::config_->cours_)
+      for (auto cour:config_->getCours())
       {
          if (cour.nombrePeriodeParCycle_ != frequenceDuCour[cour.getReference()])
          {
@@ -494,7 +474,24 @@ void Jour::recursiveCree(int jourIdx,
    }
 }
 
-#endif
+
+void Semaine::displayAllHoraire(void)
+{
+   for (auto unHoraire:combinaison_)
+   {
+      for (int periodeIdx = 0; periodeIdx < MAXPERIOD; periodeIdx++)
+      {
+         for (int jourIdx = 0; jourIdx < MAXDAY; jourIdx++)
+         {
+            for (auto cour:unHoraire[jourIdx]->combinaison[periodeIdx])
+            {
+               cout << cour->getName();
+            }
+         }
+      }
+   }
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -509,5 +506,5 @@ int main(int argc, char *argv[])
    Semaine semaine;
    Jour jour;
    semaine.Cree(&config);
-   semaine.jour_[1].DisplayCombinaison();
+   semaine.displayAllHoraire();
 }
