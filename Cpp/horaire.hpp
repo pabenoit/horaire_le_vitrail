@@ -50,33 +50,39 @@ private:
 class Cour
 {
 public:
-   Cour(string name);
+   Cour() { };
    Cour(json jsonCour, std::vector<Prof>& prof, std::vector<LocalPool>& localPool);
    string getName();
-   bool isAvalable(pair<int, int> jourPeriode);
-   LocalPool* getLocalPool() { return localPool_;};
-   void Display();
-   Cour* getReference() {return this;};
-
-private:
-   Cour() { };
+   Cour* getReference() { return this;};
+   virtual bool isAvalable(pair<int, int> jourPeriode);
+   virtual void Display();
+   virtual LocalPool* getLocalPool() { return localPool_;};
 
 public:
    Prof *prof_;
    int nombrePeriodeParCycle_;
 
-private:
+protected:
    string name_;
    std::map<std::pair<int, int>, bool> horaire_;
    LocalPool *localPool_;
    string local_;
 };
 
+class CourVide : public Cour
+{
+public:
+   CourVide() { name_ = "Vide"; nombrePeriodeParCycle_ = 99999999;};
+   bool isAvalable(pair<int, int> jourPeriode) { return true;};
+   void Display();
+   LocalPool* getLocalPool() { return NULL;};
+};
+
 
 class Configuration
 {
 public:
-   Configuration():coursVide_("vide") { };
+   Configuration() { };
    Configuration(const char fileName[]);
    void Display();
 
@@ -89,7 +95,7 @@ public:
    std::vector<Cour> cours_;
    std::vector<Prof> prof_;
    std::vector<LocalPool> localPool_;
-   Cour coursVide_;
+   CourVide coursVide_;
 };
 
 class Periode
@@ -107,7 +113,7 @@ private:
    Configuration *config_;
 
 public:
-   std::vector<std::vector<Cour *>> allCombinaison_;
+   std::vector<std::vector<Cour*>> allCombinaison_;
 };
 
 
@@ -116,9 +122,14 @@ class Jour
 public:
    Jour();
    void Cree(Configuration *config, int jour);
-   void recursiveCree(int level, 
-                      std::unordered_map<Cour *,int> frequenceDuCour, 
-                      std::unordered_map<int, std::vector<Cour *>> uneCombinaison);
+   void recursiveCree(int level,
+                      std::unordered_map<Cour *, int> frequenceDuCour,
+                      std::unordered_map<int, std::vector<Cour*>> uneCombinaison);
+   void go1levelDeep(int periodeNumber,
+                     std::vector<Cour *>,
+                     std::unordered_map<Cour *, int> frequenceDuCour,
+                     std::unordered_map<int, std::vector<Cour*>> uneCombinaison);
+
    void DisplayCombinaison();
 
 
@@ -126,7 +137,9 @@ private:
    int jour_;
    Configuration *config_;
    std::map<int, Periode> periode_;
-   std::vector<std::unordered_map<int, std::vector<Cour *>>> combinaison_;
+   std::vector<std::unordered_map<int, std::vector<Cour*>>> combinaison_;
+   //std::vector<std::pair < std::unordered_map<Cour *, int> , std::unordered_map<int, std::vector<Cour*>>>> combinaison_;
+
 };
 
 
@@ -138,7 +151,7 @@ public:
 
 private:
    Configuration *config_;
+
+public:
    std::map<int, Jour> jour_;
 };
-
-

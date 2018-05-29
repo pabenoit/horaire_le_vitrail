@@ -3,16 +3,8 @@
 #include <stdlib.h>
 // https://github.com/nlohmann/json
 
-#define MAXDAY 5
+#define MAXDAY 6
 #define MAXPERIOD 8
-
-Cour::Cour(string name)
-{
-   name_ = "vide";
-   nombrePeriodeParCycle_ = 10000;
-   local_ ="NA";
-   prof_ = NULL;
-}
 
 
 Cour::Cour(json jsonCour, std::vector<Prof>& prof, std::vector<LocalPool>& localPool)
@@ -60,38 +52,34 @@ string Cour::getName()
 
 bool Cour::isAvalable(pair<int, int> jourPeriode)
 {
-   if (name_ == "vide")
-   {
-      return true;
-   }
-
    return horaire_[jourPeriode];
 }
 
 void Cour::Display()
 {
    cout << "Cour: " << name_ << endl;
-   if (name_ != "vide")
+
+   cout << "  Nombre: " << nombrePeriodeParCycle_ << endl;
+   cout << "  Local: ";
+   if (localPool_)   cout << localPool_->poolName_ << " : ";
+   cout << local_ << endl;
+   cout << "  Prof: " << prof_->getName() << endl;
+
+   for (int day = 1; day <= MAXDAY; day++)
    {
-
-      cout << "  Nombre: " << nombrePeriodeParCycle_ << endl;
-      cout << "  Local: ";
-      if (localPool_)   cout << localPool_->poolName_ << " : ";
-      cout << local_ << endl;
-      cout << "  Prof: " << prof_->getName() << endl;
-
-      for (int day = 1; day <= MAXDAY; day++)
+      for (int period = 0; period < MAXPERIOD; period++)
       {
-         for (int period = 0; period < MAXPERIOD; period++)
-         {
-            cout << (horaire_[std::make_pair(day, period)] ? "x" : "-") << ",";
-         }
-         cout << endl;
+         cout << (horaire_[std::make_pair(day, period)] ? "x" : "-") << ",";
       }
       cout << endl;
    }
+   cout << endl;
 }
 
+void CourVide::Display()
+{
+   cout << "Cour: " << name_ << endl;
+}
 
 ////////////////////////////////////////////////////
 Prof::Prof(json jsonProf)
@@ -181,7 +169,7 @@ void LocalPool::Display()
    cout << endl;
 }
 
-Configuration::Configuration(const char fileName[]) :coursVide_("vide")
+Configuration::Configuration(const char fileName[])
 {
    readConfiguration(fileName);
    initialize();
@@ -262,18 +250,13 @@ void Periode::recursiveCreeCoursPourUnePeriode(std::vector<Cour>::iterator cour,
 {
    while (cour != config_->cours_.end())
    {
-      bool found = false;
       bool recursif = false;
 
       // Verifier si le cour peut etre donne a cette periode
       if (cour->isAvalable(std::make_pair(jour_, periode_)))
       {
+         bool found = false;
 
-         if (cour->prof_ == NULL)
-         {
-            cout << "ERROR cour NULL" << endl;
-            exit(1);
-         }
          // Verifier si le professeur est disponible a cette periode
          if (cour->prof_->isAvalable(std::make_pair(jour_, periode_)))
          {
@@ -347,6 +330,29 @@ void Jour::Cree(Configuration *config, int jour)
    int periodeNumber = 0;
 
    recursiveCree(periodeNumber, frequenceDuCour, uneCombinaison);
+}
+
+
+void Jour::go1levelDeep(int periodeNumber,
+                        std::vector<Cour *> chaqueCombinaison,
+                        std::unordered_map<Cour *, int> frequenceDuCour,
+                        std::unordered_map<int, std::vector<Cour*>> uneCombinaison)
+{
+   // Compte la frequence des cour presents
+   for (auto cour:chaqueCombinaison)
+   {
+      frequenceDuCour[cour]++;
+      if (frequenceDuCour[cour] > cour->nombrePeriodeParCycle_)
+      {
+         // Cour donne trop souvent. donc on arrete ici
+         // on ne vas pas un viveau plus bas car inutile.
+         return;
+      }
+   }
+
+   uneCombinaison[periodeNumber] = chaqueCombinaison;
+
+   recursiveCree(periodeNumber+1, frequenceDuCour, uneCombinaison);
 
 }
 
@@ -358,14 +364,10 @@ void Jour::recursiveCree(int periodeNumber,
    {
       for (auto chaqueCombinaison:periode_[periodeNumber].allCombinaison_)
       {
-         // Compte la frequence des cour presents
-         for (auto cour:chaqueCombinaison)
-         {
-            frequenceDuCour[cour]++;
-         }
-
-         uneCombinaison[periodeNumber] = chaqueCombinaison;
-         recursiveCree(periodeNumber+1, frequenceDuCour, uneCombinaison);
+         go1levelDeep(periodeNumber,
+                      chaqueCombinaison,
+                      frequenceDuCour,
+                      uneCombinaison);
       }
    } else
    {
@@ -383,6 +385,7 @@ void Jour::recursiveCree(int periodeNumber,
 
       if (courTropSouvent == false)
       {
+         //std::pair < std::unordered_map<Cour *, int> , std::unordered_map<int, std::vector<Cour*>> > toKeep(frequenceDuCour, uneCombinaison);
          // On garde
          combinaison_.push_back(uneCombinaison);
       }
@@ -397,10 +400,10 @@ void Jour::DisplayCombinaison()
 
       for (int periodeNb = 0; periodeNb < MAXPERIOD; periodeNb++)
       {
-         cout << "    " << periodeNb;
+         cout << "    " << periodeNb << "- ";
          for (auto cour:uneComb[periodeNb])
          {
-            cout << cour->getName() << " ";
+            cout << std::left << std::setw(10) << cour->getName();
          }
          cout << endl;
       }
@@ -424,9 +427,74 @@ void Semaine::Cree(Configuration *config)
       jour.Cree(config, jourIdx);
       jour_[jourIdx] = jour;
    }
+#if 0
+   std::unordered_map<Cour *, int> frequenceDuCour;
+   std::unordered_map <std::unordered_map < int, std::vector<Cour* >>> uneCombinaison;
+   int jourIdx = 0;
+
+   recursiveCree(jourIdx, frequenceDuCour, uneCombinaison);
+#endif
+}
+#if 0
+
+void Jour::go1levelDeep(int periodeNumber,
+                        std::vector<Cour *> chaqueCombinaison,
+                        std::unordered_map<Cour *, int> frequenceDuCour,
+                        std::unordered_map<int, std::vector<Cour*>> uneCombinaison)
+{
+   // Compte la frequence des cour presents
+   for (auto cour:chaqueCombinaison)
+   {
+      frequenceDuCour[cour]++;
+      if (frequenceDuCour[cour] > cour->nombrePeriodeParCycle_)
+      {
+         // Cour donne trop souvent. donc on arrete ici
+         // on ne vas pas un viveau plus bas car inutile.
+         return;
+      }
+   }
+
+   uneCombinaison[periodeNumber] = chaqueCombinaison;
+
+   recursiveCree(periodeNumber+1, frequenceDuCour, uneCombinaison);
+
 }
 
+void Jour::recursiveCree(int jourIdx,
+                         std::unordered_map<Cour *, int> frequenceDuCour,
+                         std::unordered_map<std::unordered_map<int, std::vector<Cour*>>> uneCombinaison)
+{
+   if (jourIdx < MAXDAY)
+   {
+      for (auto chaqueCombinaison:periode_[jourIdx].allCombinaison_)
+      {
+         go1levelDeep(jourIdx,
+                      chaqueCombinaison,
+                      frequenceDuCour,
+                      uneCombinaison);
+      }
+   } else
+   {
+      // Verifier tout les cours
+      bool isFrequenceCourOk = true;
+      for (auto cour::config_->cours_)
+      {
+         if (cour.nombrePeriodeParCycle_ != frequenceDuCour[cour.getReference()])
+         {
+            isFrequenceCourOk = false;
+            break;
+         }
+      }
 
+      if (isFrequenceCourOk == true)
+      {
+         // On garde
+         combinaison_.push_back(uneCombinaison);
+      }
+   }
+}
+
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -438,9 +506,8 @@ int main(int argc, char *argv[])
 
    class Configuration config(argv[1]);
 
+   Semaine semaine;
    Jour jour;
-   jour.Cree(&config, 1);
-   jour.DisplayCombinaison();
-
-
+   semaine.Cree(&config);
+   semaine.jour_[1].DisplayCombinaison();
 }
