@@ -114,10 +114,11 @@ private:
 
 using CourList = std::vector<Cour*>;
 using PeriodeList = std::vector<CourList>;
+using FrequenceCours = std::unordered_map<Cour *, int>;
 
 struct JourCombinaison
 {
-   std::unordered_map<Cour *, int> frequenceDesCours;
+   FrequenceCours frequenceDesCours;
    std::unordered_map<int /*Periode*/, CourList> combinaison;
 };
 
@@ -157,11 +158,11 @@ public:
 
 private:
    void recursiveCree(int level,
-                      std::unordered_map<Cour *, int> frequenceDuCour,
+                      FrequenceCours frequenceDuCour,
                       std::unordered_map<int, std::vector<Cour*>> uneCombinaison);
    void go1levelDeep(int periodeNumber,
                      std::vector<Cour *>,
-                     std::unordered_map<Cour *, int> frequenceDuCour,
+                     FrequenceCours frequenceDuCour,
                      std::unordered_map<int, std::vector<Cour*>> uneCombinaison);
 
 private:
@@ -180,14 +181,15 @@ public:
    void Cree(Configuration *config);
    void displayAllHoraire(void);
    std::size_t getNombreHoraires(void) {return combinaison_.size();};
+   void genererHtml(void);
 
 private:
    void recursiveCree(int jourIdx,
-                      std::unordered_map<Cour *, int> frequenceDuCour,
+                      FrequenceCours frequenceDuCour,
                       std::unordered_map < int, JourCombinaison *> uneCombinaison);
    void go1levelDeep(int jourIdx,
-                     JourCombinaison jourCombinaison,
-                     std::unordered_map<Cour *, int> frequenceDuCour,
+                     JourCombinaison &jourCombinaison,
+                     FrequenceCours frequenceDuCour,
                      std::unordered_map < int, JourCombinaison *> uneCombinaison);
 
 private:
@@ -195,3 +197,15 @@ private:
    std::vector<std::unordered_map < int, JourCombinaison *>> combinaison_;
    std::map<int, Jour> jour_;
 };
+
+
+void display(CourList in);
+void display(PeriodeList in);
+void display(FrequenceCours in);
+void display(JourCombinaison in);
+void display(JourList in);
+void display(std::unordered_map<int /*Periode*/, CourList> in);
+void display(std::vector<std::unordered_map < int, JourCombinaison *>> in);
+void display(std::unordered_map < int, JourCombinaison *> in);
+
+

@@ -21,7 +21,7 @@
 		},{
         "titre": "math",
 		"prof": "Roger",
-        "local": "local_jaune",
+        "local": "local_vert",
 		"nombre_periode_par_cycle": 4,
 		"jour_disponible": {
             "0": [true,true,false,true,true,true,true,true],
